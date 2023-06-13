@@ -1,5 +1,8 @@
 const express = require('express');
+const server  = require("socket.io");
 const router = express.Router();
+
+
 
 router.get('/mensajes', (req, res) => {
    res.json({
@@ -25,13 +28,21 @@ router.get('/mensajes', (req, res) => {
    const cuerpo=req.body.cuerpo;
    const de =req.body.de;
    const id= req.params.id;
+   
+   payload = {
 
+      de,
+      cuerpo
+
+   }
+   
     res.json({
        ok: true,
        mensaje:cuerpo,
        de:de,
        id
     });
+
   });
 
 
