@@ -45,6 +45,14 @@ router.get('/mensajes', (req, res) => {
 
   });
 
+//Servicio para Obtener todos los ids Usuarios
 
+router.get('/usuarios',(req,res)=>{
+
+
+
+
+
+});
 
  module.exports = router;

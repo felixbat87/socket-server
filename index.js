@@ -68,6 +68,64 @@ app.post('/mensajes/:id', (req, res) => {
    });
  });
 
+ //Obtener Usuarios
+
+ app.get('/usuarios',(req,res)=>{
+
+
+ io.fetchSockets()
+ .then((sockets)=>{
+  
+  if(sockets.length>0){
+
+     let aux=[];
+    sockets.forEach((ele)=>{
+      aux.push(ele.id)
+    });
+
+    return res.json({
+
+       ok: true,
+       clientes:aux
+
+    });
+
+  }else{
+
+   return res.json({
+   
+    ok:false,
+    clientes:[]
+
+   })
+  
+
+  }
+
+
+
+
+ }).catch(err=>{
+  return res.json({
+   
+    ok:false,
+    clientes:[]
+
+   })
+ })
+
+ });
+
+//Servicio para obtener usuarios y nombres
+app.get('/usuarios/detalle',(req,res)=>{
+
+ res.json({
+  ok:true,
+  clientes:usuarioConectados.getLista()
+ })
+
+});
+
 //
 const PORT = process.env.PORT||5000
 // express normal
@@ -94,13 +152,20 @@ io.on('connection', (cliente) => {
   mensaje(cliente);
   //Desconectar
   desconectar(cliente);
+  //ObtenerUsuarios
+  obtenerUsuarios(cliente);
   
 });
 //funcion desconectar
 function desconectar(cliente){
+
   cliente.on('disconnect',()=>{
   console.log("Cliente Desconectado");
   usuarioConectados.borrarUsuario(cliente.id);
+
+  io.emit('usuarios-activos',usuarioConectados.getLista());
+
+
   });
 
 
@@ -122,7 +187,9 @@ function configurarUsuario(cliente){
   cliente.on('configurar-usuario',(payload={nombre:string},callback=Function)=>{
 
     usuarioConectados.actualizarNombre(cliente.id,payload.nombre)
-  
+
+    io.emit('usuarios-activos',usuarioConectados.getLista());
+    
     callback({
       ok: true,
       mensaje:`Usuario ${payload.nombre}, configurando`
@@ -131,11 +198,30 @@ function configurarUsuario(cliente){
   });
   
 }
+//Obtener Usuarios
+function obtenerUsuarios(cliente){
+
+  cliente.on('obtener-usuarios',()=>{
+
+   
+    io.to(cliente.id).emit('usuarios-activos',usuarioConectados.getLista());
+   
+   
+  });
+  
+}
+
+
+
+
+
 // funcion conectar cliente
 function conectarCliente(cliente){
 
   const usuario= new Usuario(cliente.id);
   usuarioConectados.agregar(usuario);
+
+  
 
 }
 
@@ -173,7 +259,7 @@ class Usuario {
 
   // Obtener lista de usuarios
   getLista() {
-    return this.lista
+    return this.lista.filter(usuario=> usuario.nombre!== 'sin-nombre');
   }
 
   // Obtener un usuario
